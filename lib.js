@@ -4,6 +4,8 @@
 // For a string of base32 (a1 a2 … an), the check digit is
 // an+1 such that Σ ai P^i = 0.
 
+const cardinal = 31;
+
 function fromBase32Char(c) {
   return c.charCodeAt(0) - (/[A-Z]/.test(c)? 65: 24);
 }
@@ -27,7 +29,6 @@ function checksum(payload) {
   let opposite = cardinal - sum;
   p = (p * primitive) % cardinal;
   let code = Math.floor(opposite / p);
-  console.log('code', code);
   return toBase32Char(code);
 }
 
@@ -35,7 +36,4 @@ function verify(payload) {
   return checksum(payload) === 'A';
 }
 
-let payload = String(process.argv[2]);
-var code = checksum(payload);
-console.log('checksum', code);
-console.log('verify', checksum(payload + code));
+exports.checksum = checksum;
