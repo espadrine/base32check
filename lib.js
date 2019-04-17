@@ -37,3 +37,4 @@ function verify(payload) {
 }
 
 exports.checksum = checksum;
+exports.verify = verify;

@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 const lib = require('../lib.js');
 
+let verifyMode = false;
+for (let i = 1; i < process.argv.length; i++) {
+  if (process.argv[i] === '-c' ||
+      process.argv[i] === '--check') {
+    verifyMode = true;
+  }
+}
+
 // FIXME: process the checksum chunkwise.
 let payload = '';
 process.stdin.setEncoding('utf8');
@@ -11,11 +19,15 @@ process.stdin.on('readable', () => {
   }
 });
 process.stdin.on('end', () => {
-  var checksum = lib.checksum(payload);
-  console.log(checksum);
+  if (verifyMode) {
+    if (lib.verify(payload)) {
+      console.error('OK');
+    } else {
+      console.error('FAILED');
+      process.exit(1);
+    }
+  } else {
+    var checksum = lib.checksum(payload);
+    console.log(checksum);
+  }
 });
-
-//let payload = String(process.argv[2]);
-//var code = checksum(payload);
-//console.log('checksum', code);
-//console.log('verify', checksum(payload + code));
