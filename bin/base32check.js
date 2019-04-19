@@ -27,7 +27,8 @@ process.stdin.on('end', () => {
       process.exit(1);
     }
   } else {
-    var checksum = lib.checksum(payload);
+    var checksum = lib.hash(payload);
     console.log(checksum);
+    //console.log(lib.hash(payload + checksum));
   }
 });

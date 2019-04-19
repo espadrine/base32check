@@ -18,7 +18,7 @@ function toBase32Char(c) {
 const powersOf3 = [1, 3, 9, 27, 19, 26, 16, 17, 20, 29, 25, 13, 8, 24, 10,
   30, 28, 22, 4, 12, 5, 15, 14, 11, 2, 6, 18, 23, 7, 21];
 
-function checksum(payload) {
+function hash(payload) {
   const primitive = 3;
   const n = payload.length;
 
@@ -31,7 +31,7 @@ function checksum(payload) {
     // We could use powersOf3 here, although this may be faster.
     p = (p * primitive) % cardinal;
     sum = (sum + c * (p % cardinal)) % cardinal;
-    console.log(`c ${c}\tp ${p}\tsum ${sum}`);
+    //console.log(`c ${c}\tp ${p}\tsum ${sum}`);
   }
 
   // We must solve:  sum + code * primitive^(n+1) = 0
@@ -46,13 +46,16 @@ function checksum(payload) {
   // Hence:          code = opposite * primitive^((cardinal-2)*(n+1))
   const inverse = powersOf3[((cardinal-2)*(n+1)) % (cardinal - 1)];
   let code = (opposite * inverse) % cardinal;
-  console.log(`opposite ${opposite}\tinverse ${inverse}\tp ${p}\tcode ${code}`);
+  //console.log(`opposite ${opposite}\tinverse ${inverse}\tp ${p}\tcode ${code}`);
   return toBase32Char(code);
 }
 
 function verify(payload) {
-  return checksum(payload) === 'A';
+  return hash(payload) === 'A';
 }
 
-exports.checksum = checksum;
+exports.fromBase32Char = fromBase32Char;
+exports.toBase32Char = toBase32Char;
+
+exports.hash = hash;
 exports.verify = verify;
