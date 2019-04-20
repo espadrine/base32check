@@ -74,7 +74,7 @@ function main() {
     batterySize, attemptsPerPayload);
   console.log([...collisions].map(c => c.toString()).join('\n'));
   const fraction = collisions.size / (batterySize * attemptsPerPayload);
-  console.log(`${collisions.size} collisions (${fraction*100})%`);
+  console.log(`${collisions.size} collisions (${fraction*100}%)`);
 }
 
 main();
