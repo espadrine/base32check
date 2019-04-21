@@ -29,9 +29,11 @@ class Collision {
 function checkSubstitution(payload, checker) {
   // Take a random character.
   const index = Math.floor(Math.random() * payload.length);
-  // Replace it with a random character.
-  let sub = genBase32();
-  while (sub === payload[index]) { sub = genBase32(); }
+  let sub;
+  do {
+    // Replace it with a random character.
+    sub = genBase32();
+  } while (sub === payload[index]);
   const tweaked = payload.slice(0, index) + sub + payload.slice(index + 1);
   if (checker.hash(payload) === checker.hash(tweaked)) {
     // We have found a hash collision.
@@ -51,30 +53,93 @@ function checkSubstitutions(payload, checker, count = 100) {
   return collisions;
 }
 
-// checkTranscriptions: function(payload, checker, count)
+// checker: has a hash() and a verify().
+// distance: number of characters betwen the symbols to transpose.
+// Returns undefined (if no collision) or a Collision.
+function checkTransposition(payload, checker, distance = 0) {
+  let i1, i2, c1, c2;
+  do {
+    // Take a random character.
+    i1 = Math.floor(Math.random() * (payload.length - distance - 1));
+    c1 = payload[i1];
+    // Transpose it with the character <distance> after.
+    i2 = i1 + distance + 1;
+    c2 = payload[i2];
+  } while (c1 === c2);
+  const tweaked = payload.slice(0, i1) + c2 + payload.slice(i1 + 1, i2) + c1 + payload.slice(i2 + 1);
+  if (checker.hash(payload) === checker.hash(tweaked)) {
+    // We have found a hash collision.
+    return new Collision(payload, tweaked, 'transposition',
+      [distance, c1, c2]);
+  }
+}
+
+function checkTranspositions(payload, checker, distance = 0, count = 100) {
+  const collisions = new Set();
+  for (let i = 0; i < count; i++) {
+    const collision = checkTransposition(payload, checker, distance);
+    if (collision != null) { collisions.add(collision); }
+  }
+  return collisions;
+}
+
+// checkTranscriptions: function(payload)
 // checker: has a hash() and a verify().
 // count: number of one-payload checks to make. (Battery size.)
 // checkCount: number of checks to make for one payload.
 // Returns a Set of Collisions.
-function runBattery(checkTranscriptions, checker,
-    count = 100, checkCount = 100) {
+function runBattery(checkTranscriptions, count = 100, checkCount = 500) {
   let collisions = new Set();
   for (let i = 0; i < count; i++) {
     const newCollisions = checkTranscriptions(genBase32Payload(),
-      checker, checkCount);
+      checkCount);
     collisions = new Set([...collisions, ...newCollisions]);
   }
   return collisions;
 }
 
-function main() {
+const batteries = [
+  {
+    name: 'substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, base32check, attemptsPerPayload);
+    },
+  },
+  {
+    name: '0-jump transpositions',
+    run: function(payload, attemptsPerPayload) {
+      return checkTranspositions(payload, base32check, 0,
+        attemptsPerPayload);
+    },
+  },
+  {
+    name: '1-jump transpositions',
+    run: function(payload, attemptsPerPayload) {
+      return checkTranspositions(payload, base32check, 1,
+        attemptsPerPayload);
+    },
+  },
+  {
+    name: '2-jump transpositions',
+    run: function(payload, attemptsPerPayload) {
+      return checkTranspositions(payload, base32check, 2,
+        attemptsPerPayload);
+    },
+  },
+];
+
+function runAndDisplayBattery(battery) {
   const batterySize = 500;
   const attemptsPerPayload = 100;
-  const collisions = runBattery(checkSubstitutions, base32check,
-    batterySize, attemptsPerPayload);
-  console.log([...collisions].map(c => c.toString()).join('\n'));
-  const fraction = collisions.size / (batterySize * attemptsPerPayload);
-  console.log(`${collisions.size} collisions (${fraction*100}%)`);
+  const collisions = runBattery(battery.run, batterySize);
+  //console.log([...collisions].map(c => c.toString()).join('\n'));
+  const total = batterySize * attemptsPerPayload;
+  const fraction = collisions.size / total;
+  console.log(`${battery.name}: ${collisions.size} collisions (${fraction*100}% of ${total})`);
+}
+
+function main() {
+  batteries.forEach(runAndDisplayBattery);
 }
 
 main();
