@@ -83,6 +83,38 @@ function checkTranspositions(payload, checker, distance = 0, count = 100) {
   return collisions;
 }
 
+// checker: has a hash() and a verify().
+// distance: number of characters betwen the symbols to transpose.
+// Returns undefined (if no collision) or a Collision.
+function checkTwinError(payload, checker, distance = 0) {
+  // Take a random character.
+  const i1 = Math.floor(Math.random() * (payload.length - distance - 1));
+  // Transpose it with the character <distance> after.
+  const i2 = i1 + distance + 1;
+  const c1 = genBase32();
+  let c2;
+  do {
+    c2 = genBase32();
+  } while (c2 === c1);
+
+  payload = payload.slice(0, i1) + c1 + payload.slice(i1 + 1, i2) + c1 + payload.slice(i2 + 1);
+  const tweaked = payload.slice(0, i1) + c2 + payload.slice(i1 + 1, i2) + c2 + payload.slice(i2 + 1);
+  if (checker.hash(payload) === checker.hash(tweaked)) {
+    // We have found a hash collision.
+    return new Collision(payload, tweaked, 'twin',
+      [distance, c1, c2]);
+  }
+}
+
+function checkTwinErrors(payload, checker, distance = 0, count = 100) {
+  const collisions = new Set();
+  for (let i = 0; i < count; i++) {
+    const collision = checkTwinError(payload, checker, distance);
+    if (collision != null) { collisions.add(collision); }
+  }
+  return collisions;
+}
+
 // checkTranscriptions: function(payload)
 // checker: has a hash() and a verify().
 // count: number of one-payload checks to make. (Battery size.)
@@ -123,6 +155,27 @@ const batteries = [
     name: '2-jump transpositions',
     run: function(payload, attemptsPerPayload) {
       return checkTranspositions(payload, base32check, 2,
+        attemptsPerPayload);
+    },
+  },
+  {
+    name: '0-jump twin errors',
+    run: function(payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, base32check, 0,
+        attemptsPerPayload);
+    },
+  },
+  {
+    name: '1-jump twin errors',
+    run: function(payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, base32check, 1,
+        attemptsPerPayload);
+    },
+  },
+  {
+    name: '2-jump twin errors',
+    run: function(payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, base32check, 2,
         attemptsPerPayload);
     },
   },
