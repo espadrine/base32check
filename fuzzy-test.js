@@ -1,6 +1,6 @@
 const base32check = require('./lib.js');
 
-function genBase32Payload(length = 17) {
+function genBase32Payload(length = 20) {
   let payload = '';
   for (let i = 0; i < length; i++) {
     payload += genBase32();
@@ -25,29 +25,40 @@ class Collision {
 }
 
 // checker: has a hash() and a verify().
+// number: number of different substitutions.
 // Returns undefined (if no collision) or a Collision.
-function checkSubstitution(payload, checker) {
-  // Take a random character.
-  const index = Math.floor(Math.random() * payload.length);
-  let sub;
-  do {
-    // Replace it with a random character.
-    sub = genBase32();
-  } while (sub === payload[index]);
-  const tweaked = payload.slice(0, index) + sub + payload.slice(index + 1);
+function checkSubstitution(payload, checker, number = 1) {
+  let tweaked = payload;
+  const tweaks = [];
+  for (let i = 0; i < number; i++) {
+    let index, orig, sub, newTweaked;
+    do {
+      // Take a random character.
+      index = Math.floor(Math.random() * payload.length);
+      orig = tweaked[index];
+      do {
+        // Replace it with a random character.
+        sub = genBase32();
+      } while (sub === orig);
+      newTweaked = tweaked.slice(0, index) + sub + tweaked.slice(index + 1);
+    } while (payload === newTweaked);
+    tweaked = newTweaked;
+    tweaks.push(orig, sub);
+  }
+
   if (checker.hash(payload) === checker.hash(tweaked)) {
     // We have found a hash collision.
     return new Collision(payload, tweaked, 'substitution',
-      [payload[index], sub].sort());
+      [number, ...tweaks]);
   }
 }
 
 // checker: has a hash() and a verify().
 // Returns a Set of Collisions.
-function checkSubstitutions(payload, checker, count = 100) {
+function checkSubstitutions(payload, checker, number = 1, count = 100) {
   const collisions = new Set();
   for (let i = 0; i < count; i++) {
-    const collision = checkSubstitution(payload, checker);
+    const collision = checkSubstitution(payload, checker, number);
     if (collision != null) { collisions.add(collision); }
   }
   return collisions;
@@ -58,14 +69,21 @@ function checkSubstitutions(payload, checker, count = 100) {
 // Returns undefined (if no collision) or a Collision.
 function checkTransposition(payload, checker, distance = 0) {
   let i1, i2, c1, c2;
-  do {
-    // Take a random character.
-    i1 = Math.floor(Math.random() * (payload.length - distance - 1));
-    c1 = payload[i1];
-    // Transpose it with the character <distance> after.
-    i2 = i1 + distance + 1;
-    c2 = payload[i2];
-  } while (c1 === c2);
+  // Take a random character.
+  i1 = Math.floor(Math.random() * (payload.length - distance - 1));
+  c1 = payload[i1];
+  // Transpose it with the character <distance> after.
+  i2 = i1 + distance + 1;
+  c2 = payload[i2];
+
+  // Change the payload to avoid it being identical.
+  if (c1 === c2) {
+    do {
+      c2 = genBase32();
+    } while (c1 === c2);
+    payload = payload.slice(0, i2) + c2 + payload.slice(i2 + 1);
+  }
+
   const tweaked = payload.slice(0, i1) + c2 + payload.slice(i1 + 1, i2) + c1 + payload.slice(i2 + 1);
   if (checker.hash(payload) === checker.hash(tweaked)) {
     // We have found a hash collision.
@@ -118,13 +136,13 @@ function checkTwinErrors(payload, checker, distance = 0, count = 100) {
 // checkTranscriptions: function(payload)
 // checker: has a hash() and a verify().
 // count: number of one-payload checks to make. (Battery size.)
-// checkCount: number of checks to make for one payload.
+// attemptsPerPayload: number of checks to make for one payload.
 // Returns a Set of Collisions.
-function runBattery(checkTranscriptions, count = 100, checkCount = 500) {
+function runBattery(checkTranscriptions, count = 100, attemptsPerPayload = 500) {
   let collisions = new Set();
   for (let i = 0; i < count; i++) {
     const newCollisions = checkTranscriptions(genBase32Payload(),
-      checkCount);
+      attemptsPerPayload);
     collisions = new Set([...collisions, ...newCollisions]);
   }
   return collisions;
@@ -132,9 +150,27 @@ function runBattery(checkTranscriptions, count = 100, checkCount = 500) {
 
 const batteries = [
   {
-    name: 'substitutions',
+    name: '1-flip substitutions',
     run: function(payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, base32check, attemptsPerPayload);
+      return checkSubstitutions(payload, base32check, 1, attemptsPerPayload);
+    },
+  },
+  {
+    name: '2-flip substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, base32check, 2, attemptsPerPayload);
+    },
+  },
+  {
+    name: '3-flip substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, base32check, 3, attemptsPerPayload);
+    },
+  },
+  {
+    name: '20-flip substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, base32check, 20, attemptsPerPayload);
     },
   },
   {
@@ -159,6 +195,13 @@ const batteries = [
     },
   },
   {
+    name: '18-jump transpositions',
+    run: function(payload, attemptsPerPayload) {
+      return checkTranspositions(payload, base32check, 18,
+        attemptsPerPayload);
+    },
+  },
+  {
     name: '0-jump twin errors',
     run: function(payload, attemptsPerPayload) {
       return checkTwinErrors(payload, base32check, 0,
@@ -179,12 +222,19 @@ const batteries = [
         attemptsPerPayload);
     },
   },
+  {
+    name: '18-jump twin errors',
+    run: function(payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, base32check, 18,
+        attemptsPerPayload);
+    },
+  },
 ];
 
 function runAndDisplayBattery(battery) {
-  const batterySize = 500;
+  const batterySize = 1000;
   const attemptsPerPayload = 100;
-  const collisions = runBattery(battery.run, batterySize);
+  const collisions = runBattery(battery.run, batterySize, attemptsPerPayload);
   //console.log([...collisions].map(c => c.toString()).join('\n'));
   const total = batterySize * attemptsPerPayload;
   const fraction = collisions.size / total;
