@@ -65,7 +65,51 @@ function checkSubstitutions(payload, checker, number = 1, count = 100) {
 }
 
 // checker: has a hash() and a verify().
-// distance: number of characters betwen the symbols to transpose.
+// distance: number of characters between the symbols to substitute.
+// Returns undefined (if no collision) or a Collision.
+function checkJumpSubstitution(payload, checker, number = 2, distance = 0) {
+  let tweaked = payload;
+  const tweaks = [];
+
+  // Take a random character.
+  let index = Math.floor(Math.random() * (payload.length - distance - 1));
+
+  for (let i = 0; i < number; i++, index += distance + 1) {
+    let orig, sub, newTweaked;
+    do {
+      orig = tweaked[index];
+      do {
+        // Replace it with a random character.
+        sub = genBase32();
+      } while (sub === orig);
+      newTweaked = tweaked.slice(0, index) + sub + tweaked.slice(index + 1);
+    } while (payload === newTweaked);
+    tweaked = newTweaked;
+    tweaks.push(orig, sub);
+  }
+
+  if (checker.hash(payload) === checker.hash(tweaked)) {
+    // We have found a hash collision.
+    return new Collision(payload, tweaked, 'substitution',
+      [number, ...tweaks]);
+  }
+}
+
+// checker: has a hash() and a verify().
+// distance: number of characters between the symbols to substitute.
+// Returns a Set of Collisions.
+function checkJumpSubstitutions(payload, checker,
+    number = 2, distance = 0, count = 100) {
+  const collisions = new Set();
+  for (let i = 0; i < count; i++) {
+    const collision = checkJumpSubstitution(payload, checker, number, distance);
+    if (collision != null) { collisions.add(collision); }
+  }
+  return collisions;
+}
+
+// checker: has a hash() and a verify().
+// distance: number of characters between the symbols to transpose.
 // Returns undefined (if no collision) or a Collision.
 function checkTransposition(payload, checker, distance = 0) {
   let i1, i2, c1, c2;
@@ -102,7 +146,7 @@ function checkTranspositions(payload, checker, distance = 0, count = 100) {
 }
 
 // checker: has a hash() and a verify().
-// distance: number of characters betwen the symbols to transpose.
+// distance: number of characters between the symbols to transpose.
 // Returns undefined (if no collision) or a Collision.
 function checkTwinError(payload, checker, distance = 0) {
   // Take a random character.
@@ -168,12 +212,6 @@ const batteries = [
     },
   },
   {
-    name: '20-flip substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, base32check, 20, attemptsPerPayload);
-    },
-  },
-  {
     name: '0-jump transpositions',
     run: function(payload, attemptsPerPayload) {
       return checkTranspositions(payload, base32check, 0,
@@ -229,6 +267,24 @@ const batteries = [
         attemptsPerPayload);
     },
   },
+  {
+    name: '2-flip 0-jump substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkJumpSubstitutions(payload, base32check, 2, 0, attemptsPerPayload);
+    },
+  },
+  {
+    name: '2-flip 1-jump substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkJumpSubstitutions(payload, base32check, 2, 1, attemptsPerPayload);
+    },
+  },
+  {
+    name: '20-flip 0-jump substitutions',
+    run: function(payload, attemptsPerPayload) {
+      return checkJumpSubstitutions(payload, base32check, 20, 0, attemptsPerPayload);
+    },
+  },
 ];
 
 function runAndDisplayBattery(battery) {
@@ -237,8 +293,8 @@ function runAndDisplayBattery(battery) {
   const collisions = runBattery(battery.run, batterySize, attemptsPerPayload);
   //console.log([...collisions].map(c => c.toString()).join('\n'));
   const total = batterySize * attemptsPerPayload;
-  const fraction = collisions.size / total;
-  console.log(`${battery.name}: ${collisions.size} collisions (${fraction*100}% of ${total})`);
+  const percentage = collisions.size / total * 100;
+  console.log(`${battery.name}:\t${collisions.size} collisions\t(${percentage.toFixed(3)}% of ${total})`);
 }
 
 function main() {
