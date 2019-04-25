@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const lib = require('../lib.js');
+const {base32check1, base32check2} = require('../lib.js');
 
 let verifyMode = false;
 for (let i = 1; i < process.argv.length; i++) {
@@ -20,15 +20,15 @@ process.stdin.on('readable', () => {
 });
 process.stdin.on('end', () => {
   if (verifyMode) {
-    if (lib.verify(payload)) {
+    if (base32check1.verify(payload)) {
       console.error('OK');
     } else {
       console.error('FAILED');
       process.exit(1);
     }
   } else {
-    var checksum = lib.hash(payload);
+    var checksum = base32check1.hash(payload);
     console.log(checksum);
-    //console.log(lib.hash(payload + checksum));
+    //console.log(base32check1.hash(payload + checksum));
   }
 });
