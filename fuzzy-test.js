@@ -1,4 +1,4 @@
-const base32check = require('./lib.js');
+const {base32check1, base32check2} = require('./lib.js');
 
 function genBase32Payload(length = 20) {
   let payload = '';
@@ -9,7 +9,7 @@ function genBase32Payload(length = 20) {
 }
 
 function genBase32() {
-  return base32check.toBase32Char(Math.floor(Math.random() * 32));
+  return base32check2.toBase32Char(Math.floor(Math.random() * 32));
 }
 
 class Collision {
@@ -72,7 +72,8 @@ function checkJumpSubstitution(payload, checker, number = 2, distance = 0) {
   const tweaks = [];
 
   // Take a random character.
-  let index = Math.floor(Math.random() * (payload.length - distance - 1));
+  let index = Math.floor(Math.random()
+    * (payload.length - (distance + 1) * number + distance));
 
   for (let i = 0; i < number; i++, index += distance + 1) {
     let orig, sub, newTweaked;
@@ -182,10 +183,11 @@ function checkTwinErrors(payload, checker, distance = 0, count = 100) {
 // count: number of one-payload checks to make. (Battery size.)
 // attemptsPerPayload: number of checks to make for one payload.
 // Returns a Set of Collisions.
-function runBattery(checkTranscriptions, count = 100, attemptsPerPayload = 500) {
+function runBattery(checkTranscriptions, checker,
+    count = 100, attemptsPerPayload = 500) {
   let collisions = new Set();
   for (let i = 0; i < count; i++) {
-    const newCollisions = checkTranscriptions(genBase32Payload(),
+    const newCollisions = checkTranscriptions(checker, genBase32Payload(),
       attemptsPerPayload);
     collisions = new Set([...collisions, ...newCollisions]);
   }
@@ -194,103 +196,104 @@ function runBattery(checkTranscriptions, count = 100, attemptsPerPayload = 500) 
 
 const batteries = [
   {
-    name: '1-flip substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, base32check, 1, attemptsPerPayload);
+    name: '1-substitutions',
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, checker, 1, attemptsPerPayload);
     },
   },
   {
-    name: '2-flip substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, base32check, 2, attemptsPerPayload);
+    name: '2-substitutions',
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, checker, 2, attemptsPerPayload);
     },
   },
   {
-    name: '3-flip substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, base32check, 3, attemptsPerPayload);
+    name: '3-substitutions',
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, checker, 3, attemptsPerPayload);
     },
   },
   {
     name: '0-jump transpositions',
-    run: function(payload, attemptsPerPayload) {
-      return checkTranspositions(payload, base32check, 0,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTranspositions(payload, checker, 0,
         attemptsPerPayload);
     },
   },
   {
     name: '1-jump transpositions',
-    run: function(payload, attemptsPerPayload) {
-      return checkTranspositions(payload, base32check, 1,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTranspositions(payload, checker, 1,
         attemptsPerPayload);
     },
   },
   {
     name: '2-jump transpositions',
-    run: function(payload, attemptsPerPayload) {
-      return checkTranspositions(payload, base32check, 2,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTranspositions(payload, checker, 2,
         attemptsPerPayload);
     },
   },
   {
     name: '18-jump transpositions',
-    run: function(payload, attemptsPerPayload) {
-      return checkTranspositions(payload, base32check, 18,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTranspositions(payload, checker, 18,
         attemptsPerPayload);
     },
   },
   {
     name: '0-jump twin errors',
-    run: function(payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, base32check, 0,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, checker, 0,
         attemptsPerPayload);
     },
   },
   {
     name: '1-jump twin errors',
-    run: function(payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, base32check, 1,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, checker, 1,
         attemptsPerPayload);
     },
   },
   {
     name: '2-jump twin errors',
-    run: function(payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, base32check, 2,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, checker, 2,
         attemptsPerPayload);
     },
   },
   {
     name: '18-jump twin errors',
-    run: function(payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, base32check, 18,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkTwinErrors(payload, checker, 18,
         attemptsPerPayload);
     },
   },
   {
-    name: '2-flip 0-jump substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkJumpSubstitutions(payload, base32check, 2, 0, attemptsPerPayload);
+    name: '0-jump 2-substitutions',
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkJumpSubstitutions(payload, checker, 2, 0, attemptsPerPayload);
     },
   },
   {
-    name: '2-flip 1-jump substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkJumpSubstitutions(payload, base32check, 2, 1, attemptsPerPayload);
+    name: '1-jump 2-substitutions',
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkJumpSubstitutions(payload, checker, 2, 1, attemptsPerPayload);
     },
   },
   {
-    name: '20-flip 0-jump substitutions',
-    run: function(payload, attemptsPerPayload) {
-      return checkJumpSubstitutions(payload, base32check, 20, 0, attemptsPerPayload);
+    name: '0-jump 20-substitutions',
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkJumpSubstitutions(payload, checker, 20, 0, attemptsPerPayload);
     },
   },
 ];
 
-function runAndDisplayBattery(battery) {
+function runAndDisplayBattery(battery, checker) {
   const batterySize = 1000;
   const attemptsPerPayload = 100;
-  const collisions = runBattery(battery.run, batterySize, attemptsPerPayload);
+  const collisions = runBattery(battery.run, checker,
+    batterySize, attemptsPerPayload);
   //console.log([...collisions].map(c => c.toString()).join('\n'));
   const total = batterySize * attemptsPerPayload;
   const percentage = collisions.size / total * 100;
@@ -298,7 +301,10 @@ function runAndDisplayBattery(battery) {
 }
 
 function main() {
-  batteries.forEach(runAndDisplayBattery);
+  console.log('base32check1');
+  batteries.forEach(b => runAndDisplayBattery(b, base32check1));
+  console.log('base32check2');
+  batteries.forEach(b => runAndDisplayBattery(b, base32check2));
 }
 
 main();
