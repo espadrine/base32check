@@ -6,33 +6,54 @@ const { mod11_10: numeric_mod11_10,  // Numeric 1-digit
 } = require('cdigit');
 
 function main() {
-  console.log(outline(' base32check1 '));
-  batteries.forEach(b => runAndDisplayBattery(b, base32check1));
-  console.log(outline(' base32check2 '));
-  batteries.forEach(b => runAndDisplayBattery(b, base32check2));
-  console.log(outline(' MOD 11-10 '));
-  batteries.forEach(b => runAndDisplayBattery(b, mod11_10));
-  console.log(outline(' MOD 97-10 '));
-  batteries.forEach(b => runAndDisplayBattery(b, mod97_10));
-  console.log(outline(' MOD 37-36 '));
-  batteries.forEach(b => runAndDisplayBattery(b, mod37_36));
-  console.log(outline(' MOD 1271-36 '));
-  batteries.forEach(b => runAndDisplayBattery(b, mod1271_36));
+  [
+    { label: ' base32check1 ',
+      checker: base32check1 },
+    { label: ' base32check2 ',
+      checker: base32check2 },
+    { label: ' MOD 11-10 ',
+      checker: mod11_10 },
+    { label: ' MOD 97-10 ',
+      checker: mod97_10 },
+    { label: ' MOD 37-36 ',
+      checker: mod37_36 },
+    { label: ' MOD 1271-36 ',
+      checker: mod1271_36 },
+  ].forEach(checksum => {
+    console.log(outline(checksum.label));
+    const stats = batteries.map(b =>
+      computeBatteryStats(b, checksum.checker));
+    stats.forEach(displayBatteryStats);
+    const score = humanErrorDetectionRate(stats) * 100;
+    console.log(`Score: ${score.toFixed(3)}%`);
+  });
 }
 
 function outline(text) {
   return '\x1B[7m' + text + '\x1B[m';
 }
 
-function runAndDisplayBattery(battery, checker) {
+function displayBatteryStats(batteryStats) {
+  const { battery, collisions, errorRate, total } = batteryStats;
+  //console.log([...collisions].map(c => c.toString()).join('\n'));
+  const percentage = errorRate * 100;
+  console.log(`${battery.name}:\t${collisions.size} ` +
+    `collisions\t(${percentage.toFixed(3)}% of ${total})`);
+}
+
+function humanErrorDetectionRate(stats) {
+  return 1 - stats.reduce((acc, batteryStats) =>
+    acc + batteryStats.errorRate * batteryStats.battery.probability, 0);
+}
+
+function computeBatteryStats(battery, checker) {
   const batterySize = 1000;
   const attemptsPerPayload = 100;
   const collisions = runBattery(battery.run, checker,
     batterySize, attemptsPerPayload);
-  //console.log([...collisions].map(c => c.toString()).join('\n'));
   const total = batterySize * attemptsPerPayload;
-  const percentage = collisions.size / total * 100;
-  console.log(`${battery.name}:\t${collisions.size} collisions\t(${percentage.toFixed(3)}% of ${total})`);
+  const errorRate = collisions.size / total;
+  return { battery, checker, errorRate, collisions, total };
 }
 
 // checker: has a compute() and a verify().
@@ -208,24 +229,49 @@ function runBattery(checkTranscriptions, checker,
 const batteries = [
   {
     name: '1 substitution ',
+    probability: 0.7905,
     run: function(checker, payload, attemptsPerPayload) {
       return checkSubstitutions(payload, checker, 1, attemptsPerPayload);
     },
   },
   {
     name: '2 substitutions',
+    probability: 0.0081,
     run: function(checker, payload, attemptsPerPayload) {
       return checkSubstitutions(payload, checker, 2, attemptsPerPayload);
     },
   },
   {
     name: '3 substitutions',
+    probability: 0.014,
     run: function(checker, payload, attemptsPerPayload) {
       return checkSubstitutions(payload, checker, 3, attemptsPerPayload);
     },
   },
   {
+    name: '4 substitutions',
+    probability: 0.0097,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, checker, 4, attemptsPerPayload);
+    },
+  },
+  {
+    name: '5 substitutions',
+    probability: 0.0181,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, checker, 5, attemptsPerPayload);
+    },
+  },
+  {
+    name: '6 substitutions',
+    probability: 0.0134,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkSubstitutions(payload, checker, 6, attemptsPerPayload);
+    },
+  },
+  {
     name: '0-jump transposition',
+    probability: 0.1021,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTranspositions(payload, checker, 0,
         attemptsPerPayload);
@@ -233,6 +279,7 @@ const batteries = [
   },
   {
     name: '1-jump transposition',
+    probability: 0.0082,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTranspositions(payload, checker, 1,
         attemptsPerPayload);
@@ -240,6 +287,7 @@ const batteries = [
   },
   {
     name: '2-jump transposition',
+    probability: 0,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTranspositions(payload, checker, 2,
         attemptsPerPayload);
@@ -247,6 +295,7 @@ const batteries = [
   },
   {
     name: '18-jump transposition',
+    probability: 0,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTranspositions(payload, checker, 18,
         attemptsPerPayload);
@@ -254,6 +303,7 @@ const batteries = [
   },
   {
     name: '0-jump twin error',
+    probability: 0.0055,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTwinErrors(payload, checker, 0,
         attemptsPerPayload);
@@ -261,6 +311,7 @@ const batteries = [
   },
   {
     name: '1-jump twin error',
+    probability: 0.0029,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTwinErrors(payload, checker, 1,
         attemptsPerPayload);
@@ -268,6 +319,7 @@ const batteries = [
   },
   {
     name: '2-jump twin error',
+    probability: 0,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTwinErrors(payload, checker, 2,
         attemptsPerPayload);
@@ -275,29 +327,26 @@ const batteries = [
   },
   {
     name: '18-jump twin error',
+    probability: 0,
     run: function(checker, payload, attemptsPerPayload) {
       return checkTwinErrors(payload, checker, 18,
         attemptsPerPayload);
     },
   },
   {
-    name: '0-jump 2 substitutions',
+    name: '2 0-jump substitutions',
+    probability: 0.0192,
     run: function(checker, payload, attemptsPerPayload) {
       return checkJumpSubstitutions(payload, checker, 2, 0, attemptsPerPayload);
     },
   },
   {
-    name: '1-jump 2 substitutions',
+    name: '2 1-jump substitutions',
+    probability: 0.0036,
     run: function(checker, payload, attemptsPerPayload) {
       return checkJumpSubstitutions(payload, checker, 2, 1, attemptsPerPayload);
     },
-  },
-  {
-    name: '0-jump 20 substitution',
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkJumpSubstitutions(payload, checker, 20, 0, attemptsPerPayload);
-    },
-  },
+  }
 ];
 
 function genBase32Payload(length = 20) {
