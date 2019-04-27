@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+const { useChecker } = require('../binlib.js');
+const { base32check2 } = require('../lib.js');
+
+useChecker(base32check2);

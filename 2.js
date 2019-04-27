@@ -5,7 +5,8 @@
 // an+1 such that Σ ai P^i = 0.
 
 const cardinal = 1021;
-const primitive = 1011;  // Taken from bin/gen-primitive.js 1021
+// Primitive taken from bin/finite-field-primitive-elements 1021.
+const primitive = 1011;
 const primitivePowers = (function genPowersOfPrimitive() {
   const powers = [1];
   let p = 1;

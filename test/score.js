@@ -1,12 +1,12 @@
-const { base32check1, base32check2 } = require('./lib.js');
+const { base32check1, base32check2 } = require('../lib.js');
 const { mod11_10: numeric_mod11_10,  // Numeric 1-digit
         mod97_10: numeric_mod97_10,  // Numeric 2-digit
         mod37_36,                    // Alnum 1-digit
         mod1271_36,                  // Alnum 2-digit
 } = require('cdigit');
 
-function main() {
-  [
+function makeChecksums() {
+  return [
     { label: ' base32check1 ',
       checker: base32check1,
       size: 1,
@@ -31,30 +31,16 @@ function main() {
       checker: mod1271_36,
       size: 2,
       bitsPerChar: Math.log2(36) },
-  ].forEach(checksum => {
-    console.log(outline(checksum.label));
-    const stats = batteries.map(b =>
-      computeBatteryStats(b, checksum.checker));
-    stats.forEach(displayBatteryStats);
-    const errorRate = humanErrorDetectionRate(stats)
-    const score = errorRate * 100;
-    const detectionRatePerBit = errorRate
-      / (checksum.size * checksum.bitsPerChar);
-    console.log(`Score: ${score.toFixed(3)}%\t`
-      + `Detection rate per bit: ${detectionRatePerBit}`);
-  });
+  ];
 }
 
-function outline(text) {
-  return '\x1B[7m' + text + '\x1B[m';
+function computeCheckerDetectionRate(checker) {
+  const stats = computeCheckerStats(checker);
+  return humanErrorDetectionRate(stats)
 }
 
-function displayBatteryStats(batteryStats) {
-  const { battery, collisions, errorRate, total } = batteryStats;
-  //console.log([...collisions].map(c => c.toString()).join('\n'));
-  const percentage = errorRate * 100;
-  console.log(`${battery.name}:\t${collisions.size} ` +
-    `collisions\t(${percentage.toFixed(3)}% of ${total})`);
+function computeCheckerStats(checker) {
+  return batteries.map(b => computeBatteryStats(b, checker));
 }
 
 function humanErrorDetectionRate(stats) {
@@ -72,10 +58,161 @@ function computeBatteryStats(battery, checker) {
   return { battery, checker, errorRate, collisions, total };
 }
 
+function makeBatteries() {
+  return [
+    {
+      name: '1  substitution',
+      probability: 0.7905,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkSubstitution, { number: 1 });
+      },
+    },
+    {
+      name: '2 substitutions',
+      probability: 0.0081,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkSubstitution, { number: 2 });
+      },
+    },
+    {
+      name: '3 substitutions',
+      probability: 0.014,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkSubstitution, { number: 3 });
+      },
+    },
+    {
+      name: '4 substitutions',
+      probability: 0.0097,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkSubstitution, { number: 4 });
+      },
+    },
+    {
+      name: '5 substitutions',
+      probability: 0.0181,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkSubstitution, { number: 5 });
+      },
+    },
+    {
+      name: '6 substitutions',
+      probability: 0.0134,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkSubstitution, { number: 6 });
+      },
+    },
+    {
+      name: '0-jump transposition',
+      probability: 0.1021,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTransposition, { distance: 0 });
+      },
+    },
+    {
+      name: '1-jump transposition',
+      probability: 0.0082,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTransposition, { distance: 1 });
+      },
+    },
+    {
+      name: '2-jump transposition',
+      probability: 0,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTransposition, { distance: 2 });
+      },
+    },
+    {
+      name: '18-jump transposition',
+      probability: 0,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTransposition, { distance: 18 });
+      },
+    },
+    {
+      name: '0-jump twin error',
+      probability: 0.0055,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTwinError, { distance: 0 });
+      },
+    },
+    {
+      name: '1-jump twin error',
+      probability: 0.0029,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTwinError, { distance: 1 });
+      },
+    },
+    {
+      name: '2-jump twin error',
+      probability: 0,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTwinError, { distance: 2 });
+      },
+    },
+    {
+      name: '18-jump twin error',
+      probability: 0,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkTwinError, { distance: 18 });
+      },
+    },
+    {
+      name: '2 0-jump substitutions',
+      probability: 0.0192,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkJumpSubstitution, { number: 2, distance: 0 });
+      },
+    },
+    {
+      name: '2 1-jump substitutions',
+      probability: 0.0036,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkJumpSubstitution, { number: 2, distance: 1 });
+      },
+    },
+    {
+      name: 'phonetic error',
+      probability: 0.0049,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkPhoneticError, {});
+      },
+    }
+  ];
+}
+
+function findCollisions(checker, payload, attemptsPerPayload = 100,
+    checkError, params = {}) {
+  const collisions = new Set();
+  for (let i = 0; i < attemptsPerPayload; i++) {
+    const collision = checkError(checker, payload, params);
+    if (collision != null) { collisions.add(collision); }
+  }
+  return collisions;
+}
+
 // checker: has a compute() and a verify().
 // number: number of different substitutions.
 // Returns undefined (if no collision) or a Collision.
-function checkSubstitution(payload, checker, number = 1) {
+function checkSubstitution(checker, payload, { number = 1 }) {
   let tweaked = payload;
   const tweaks = [];
   for (let i = 0; i < number; i++) {
@@ -102,20 +239,10 @@ function checkSubstitution(payload, checker, number = 1) {
 }
 
 // checker: has a compute() and a verify().
-// Returns a Set of Collisions.
-function checkSubstitutions(payload, checker, number = 1, count = 100) {
-  const collisions = new Set();
-  for (let i = 0; i < count; i++) {
-    const collision = checkSubstitution(payload, checker, number);
-    if (collision != null) { collisions.add(collision); }
-  }
-  return collisions;
-}
-
-// checker: has a compute() and a verify().
 // distance: number of characters between the symbols to substitute.
 // Returns undefined (if no collision) or a Collision.
-function checkJumpSubstitution(payload, checker, number = 2, distance = 0) {
+function checkJumpSubstitution(checker, payload,
+    { number = 2, distance = 0 }) {
   let tweaked = payload;
   const tweaks = [];
 
@@ -145,22 +272,9 @@ function checkJumpSubstitution(payload, checker, number = 2, distance = 0) {
 }
 
 // checker: has a compute() and a verify().
-// distance: number of characters between the symbols to substitute.
-// Returns a Set of Collisions.
-function checkJumpSubstitutions(payload, checker,
-    number = 2, distance = 0, count = 100) {
-  const collisions = new Set();
-  for (let i = 0; i < count; i++) {
-    const collision = checkJumpSubstitution(payload, checker, number, distance);
-    if (collision != null) { collisions.add(collision); }
-  }
-  return collisions;
-}
-
-// checker: has a compute() and a verify().
 // distance: number of characters between the symbols to transpose.
 // Returns undefined (if no collision) or a Collision.
-function checkTransposition(payload, checker, distance = 0) {
+function checkTransposition(checker, payload, { distance = 0 }) {
   let i1, i2, c1, c2;
   // Take a random character.
   i1 = Math.floor(Math.random() * (payload.length - distance - 1));
@@ -185,19 +299,10 @@ function checkTransposition(payload, checker, distance = 0) {
   }
 }
 
-function checkTranspositions(payload, checker, distance = 0, count = 100) {
-  const collisions = new Set();
-  for (let i = 0; i < count; i++) {
-    const collision = checkTransposition(payload, checker, distance);
-    if (collision != null) { collisions.add(collision); }
-  }
-  return collisions;
-}
-
 // checker: has a compute() and a verify().
 // distance: number of characters between the symbols to transpose.
 // Returns undefined (if no collision) or a Collision.
-function checkTwinError(payload, checker, distance = 0) {
+function checkTwinError(checker, payload, { distance = 0 }) {
   // Take a random character.
   const i1 = Math.floor(Math.random() * (payload.length - distance - 1));
   // Transpose it with the character <distance> after.
@@ -217,19 +322,10 @@ function checkTwinError(payload, checker, distance = 0) {
   }
 }
 
-function checkTwinErrors(payload, checker, distance = 0, count = 100) {
-  const collisions = new Set();
-  for (let i = 0; i < count; i++) {
-    const collision = checkTwinError(payload, checker, distance);
-    if (collision != null) { collisions.add(collision); }
-  }
-  return collisions;
-}
-
 // checker: has a compute() and a verify().
 // distance: number of characters between the symbols to transpose.
 // Returns undefined (if no collision) or a Collision.
-function checkPhoneticError(payload, checker) {
+function checkPhoneticError(checker, payload) {
   // Take a random character.
   const index = Math.floor(Math.random() * (payload.length - 1));
   // Take a random digit from 1 to 9.
@@ -244,15 +340,6 @@ function checkPhoneticError(payload, checker) {
     // We have found a hash collision.
     return new Collision(payload, tweaked, 'phonetic', [digit]);
   }
-}
-
-function checkPhoneticErrors(payload, checker, count = 100) {
-  const collisions = new Set();
-  for (let i = 0; i < count; i++) {
-    const collision = checkPhoneticError(payload, checker);
-    if (collision != null) { collisions.add(collision); }
-  }
-  return collisions;
 }
 
 // checkTranscriptions: function(payload)
@@ -270,136 +357,6 @@ function runBattery(checkTranscriptions, checker,
   }
   return collisions;
 }
-
-const batteries = [
-  {
-    name: '1  substitution',
-    probability: 0.7905,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, checker, 1, attemptsPerPayload);
-    },
-  },
-  {
-    name: '2 substitutions',
-    probability: 0.0081,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, checker, 2, attemptsPerPayload);
-    },
-  },
-  {
-    name: '3 substitutions',
-    probability: 0.014,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, checker, 3, attemptsPerPayload);
-    },
-  },
-  {
-    name: '4 substitutions',
-    probability: 0.0097,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, checker, 4, attemptsPerPayload);
-    },
-  },
-  {
-    name: '5 substitutions',
-    probability: 0.0181,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, checker, 5, attemptsPerPayload);
-    },
-  },
-  {
-    name: '6 substitutions',
-    probability: 0.0134,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkSubstitutions(payload, checker, 6, attemptsPerPayload);
-    },
-  },
-  {
-    name: '0-jump transposition',
-    probability: 0.1021,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTranspositions(payload, checker, 0,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '1-jump transposition',
-    probability: 0.0082,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTranspositions(payload, checker, 1,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '2-jump transposition',
-    probability: 0,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTranspositions(payload, checker, 2,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '18-jump transposition',
-    probability: 0,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTranspositions(payload, checker, 18,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '0-jump twin error',
-    probability: 0.0055,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, checker, 0,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '1-jump twin error',
-    probability: 0.0029,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, checker, 1,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '2-jump twin error',
-    probability: 0,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, checker, 2,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '18-jump twin error',
-    probability: 0,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkTwinErrors(payload, checker, 18,
-        attemptsPerPayload);
-    },
-  },
-  {
-    name: '2 0-jump substitutions',
-    probability: 0.0192,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkJumpSubstitutions(payload, checker, 2, 0, attemptsPerPayload);
-    },
-  },
-  {
-    name: '2 1-jump substitutions',
-    probability: 0.0036,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkJumpSubstitutions(payload, checker, 2, 1, attemptsPerPayload);
-    },
-  },
-  {
-    name: 'phonetic error',
-    probability: 0.0049,
-    run: function(checker, payload, attemptsPerPayload) {
-      return checkPhoneticErrors(payload, checker, attemptsPerPayload);
-    },
-  }
-];
 
 function genBase32Payload(length = 20) {
   let payload = '';
@@ -445,4 +402,11 @@ class Collision {
   }
 }
 
-main();
+const checksums = makeChecksums();
+const batteries = makeBatteries();
+
+exports.checksums = checksums;
+exports.batteries = batteries;
+exports.computeCheckerDetectionRate = computeCheckerDetectionRate;
+exports.computeCheckerStats = computeCheckerStats;
+exports.humanErrorDetectionRate = humanErrorDetectionRate;

@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+// Find all the primitive elements of a finite field for a given cardinal.
+
+const { primitiveElements } = require('../binlib.js');
+
+let cardinal = process.argv[2];
+if (cardinal == null) {
+  console.error('Missing parameter.');
+  console.error('Usage: gen-primitive <cardinal>');
+  console.error('  cardinal: cardinal of the finite field.');
+  process.exit(1);
+}
+
+console.log([...primitiveElements(cardinal).keys()].join(' '));
