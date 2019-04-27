@@ -210,6 +210,35 @@ function checkTwinErrors(payload, checker, distance = 0, count = 100) {
   return collisions;
 }
 
+// checker: has a compute() and a verify().
+// distance: number of characters between the symbols to transpose.
+// Returns undefined (if no collision) or a Collision.
+function checkPhoneticError(payload, checker) {
+  // Take a random character.
+  const index = Math.floor(Math.random() * (payload.length - 1));
+  // Take a random digit from 1 to 9.
+  const digit = String.fromCharCode(
+    Math.floor(1 + Math.random() * 9) + '0'.charCodeAt(0));
+
+  payload = payload.slice(0, index) + '1' + digit + payload.slice(index + 2);
+  const tweaked = payload.slice(0, index) + digit + '0'
+    + payload.slice(index + 2);
+
+  if (checker.compute(payload) === checker.compute(tweaked)) {
+    // We have found a hash collision.
+    return new Collision(payload, tweaked, 'phonetic', [digit]);
+  }
+}
+
+function checkPhoneticErrors(payload, checker, count = 100) {
+  const collisions = new Set();
+  for (let i = 0; i < count; i++) {
+    const collision = checkPhoneticError(payload, checker);
+    if (collision != null) { collisions.add(collision); }
+  }
+  return collisions;
+}
+
 // checkTranscriptions: function(payload)
 // checker: has a compute() and a verify().
 // count: number of one-payload checks to make. (Battery size.)
@@ -228,7 +257,7 @@ function runBattery(checkTranscriptions, checker,
 
 const batteries = [
   {
-    name: '1 substitution ',
+    name: '1  substitution',
     probability: 0.7905,
     run: function(checker, payload, attemptsPerPayload) {
       return checkSubstitutions(payload, checker, 1, attemptsPerPayload);
@@ -345,6 +374,13 @@ const batteries = [
     probability: 0.0036,
     run: function(checker, payload, attemptsPerPayload) {
       return checkJumpSubstitutions(payload, checker, 2, 1, attemptsPerPayload);
+    },
+  },
+  {
+    name: 'phonetic error',
+    probability: 0.0049,
+    run: function(checker, payload, attemptsPerPayload) {
+      return checkPhoneticErrors(payload, checker, attemptsPerPayload);
     },
   }
 ];
