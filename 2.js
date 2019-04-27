@@ -26,7 +26,7 @@ function toBase32Char(c) {
   return String.fromCharCode(d);
 }
 
-function hash(payload) {
+function compute(payload) {
   if (payload.length % 2 === 1) { payload = 'A' + payload; }
   const n = payload.length / 2;
 
@@ -58,12 +58,12 @@ function hash(payload) {
   return toBase32Char(Math.floor(code / 32)) + toBase32Char(code % 32);
 }
 
-function verify(payload) {
-  return hash(payload) === 'AA';
+function validate(payload) {
+  return compute(payload) === 'AA';
 }
 
 exports.fromBase32Char = fromBase32Char;
 exports.toBase32Char = toBase32Char;
 
-exports.hash = hash;
-exports.verify = verify;
+exports.compute = compute;
+exports.validate = validate;

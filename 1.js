@@ -95,7 +95,7 @@ function toBase32Char(row) {
   return String.fromCharCode(d);
 }
 
-function hash(payload) {
+function compute(payload) {
   const n = payload.length;
 
   // We must solve Σ ai P^i = 0 for i from 1 to n+1.
@@ -126,12 +126,12 @@ function hash(payload) {
   return toBase32Char(code);
 }
 
-function verify(payload) {
-  return hash(payload) === 'A';
+function validate(payload) {
+  return compute(payload) === 'A';
 }
 
 exports.fromBase32Char = fromBase32Char;
 exports.toBase32Char = toBase32Char;
 
-exports.hash = hash;
-exports.verify = verify;
+exports.compute = compute;
+exports.validate = validate;

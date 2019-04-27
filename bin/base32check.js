@@ -27,8 +27,8 @@ process.stdin.on('end', () => {
       process.exit(1);
     }
   } else {
-    var checksum = base32check1.hash(payload);
+    var checksum = base32check1.compute(payload);
     console.log(checksum);
-    //console.log(base32check1.hash(payload + checksum));
+    //console.log(base32check1.compute(payload + checksum));
   }
 });
