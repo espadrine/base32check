@@ -4,10 +4,11 @@
   "description": "base32check is a set of check digit algorithms designed to detect human transcription errors in base32 data, which happens to be particularly convenient to avoid transcription errors.",
   "main": "lib.js",
   "bin": {
-    "base32check": "base32check.js"
+    "base32check1": "bin/base32check1"
+    "base32check2": "bin/base32check2"
   },
   "scripts": {
-    "test": "node fuzzy-test.js"
+    "test": "node test/fuzzy.js"
   },
   "repository": {
     "type": "git",

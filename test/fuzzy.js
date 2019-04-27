@@ -3,7 +3,7 @@ const { checksums, computeCheckerStats, humanErrorDetectionRate }
 
 function main() {
   checksums.forEach(checksum => {
-    console.log(outline(checksum.label));
+    console.log(outline(' ' + checksum.label + ' '));
     const stats = computeCheckerStats(checksum.checker);
     stats.forEach(displayBatteryStats);
     const errorRate = humanErrorDetectionRate(stats)

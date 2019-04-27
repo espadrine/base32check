@@ -7,27 +7,27 @@ const { mod11_10: numeric_mod11_10,  // Numeric 1-digit
 
 function makeChecksums() {
   return [
-    { label: ' base32check1 ',
+    { label: 'base32check1',
       checker: base32check1,
       size: 1,
       bitsPerChar: 5 },
-    { label: ' base32check2 ',
+    { label: 'base32check2',
       checker: base32check2,
       size: 2,
       bitsPerChar: 5 },
-    { label: ' MOD 11-10 ',
+    { label: 'MOD 11-10',
       checker: mod11_10,
       size: 1,
       bitsPerChar: 5 },
-    { label: ' MOD 97-10 ',
+    { label: 'MOD 97-10',
       checker: mod97_10,
       size: 2,
       bitsPerChar: 5 },
-    { label: ' MOD 37-36 ',
+    { label: 'MOD 37-36',
       checker: mod37_36,
       size: 1,
       bitsPerChar: Math.log2(36) },
-    { label: ' MOD 1271-36 ',
+    { label: 'MOD 1271-36',
       checker: mod1271_36,
       size: 2,
       bitsPerChar: Math.log2(36) },
@@ -410,3 +410,6 @@ exports.batteries = batteries;
 exports.computeCheckerDetectionRate = computeCheckerDetectionRate;
 exports.computeCheckerStats = computeCheckerStats;
 exports.humanErrorDetectionRate = humanErrorDetectionRate;
+
+exports.base32check1 = base32check1;
+exports.base32check2 = base32check2;
