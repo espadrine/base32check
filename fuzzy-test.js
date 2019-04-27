@@ -8,24 +8,40 @@ const { mod11_10: numeric_mod11_10,  // Numeric 1-digit
 function main() {
   [
     { label: ' base32check1 ',
-      checker: base32check1 },
+      checker: base32check1,
+      size: 1,
+      bitsPerChar: 5 },
     { label: ' base32check2 ',
-      checker: base32check2 },
+      checker: base32check2,
+      size: 2,
+      bitsPerChar: 5 },
     { label: ' MOD 11-10 ',
-      checker: mod11_10 },
+      checker: mod11_10,
+      size: 1,
+      bitsPerChar: 5 },
     { label: ' MOD 97-10 ',
-      checker: mod97_10 },
+      checker: mod97_10,
+      size: 2,
+      bitsPerChar: 5 },
     { label: ' MOD 37-36 ',
-      checker: mod37_36 },
+      checker: mod37_36,
+      size: 1,
+      bitsPerChar: Math.log2(36) },
     { label: ' MOD 1271-36 ',
-      checker: mod1271_36 },
+      checker: mod1271_36,
+      size: 2,
+      bitsPerChar: Math.log2(36) },
   ].forEach(checksum => {
     console.log(outline(checksum.label));
     const stats = batteries.map(b =>
       computeBatteryStats(b, checksum.checker));
     stats.forEach(displayBatteryStats);
-    const score = humanErrorDetectionRate(stats) * 100;
-    console.log(`Score: ${score.toFixed(3)}%`);
+    const errorRate = humanErrorDetectionRate(stats)
+    const score = errorRate * 100;
+    const detectionRatePerBit = errorRate
+      / (checksum.size * checksum.bitsPerChar);
+    console.log(`Score: ${score.toFixed(3)}%\t`
+      + `Detection rate per bit: ${detectionRatePerBit}`);
   });
 }
 
