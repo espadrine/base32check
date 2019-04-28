@@ -36,7 +36,7 @@ function makeChecksums() {
 
 function computeCheckerDetectionRate(checker) {
   const stats = computeCheckerStats(checker);
-  return humanErrorDetectionRate(stats)
+  return humanErrorDetectionRate(stats);
 }
 
 function computeCheckerStats(checker) {

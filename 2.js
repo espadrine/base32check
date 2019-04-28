@@ -23,7 +23,7 @@ function fromBase32Char(c) {
 
 function toBase32Char(c) {
   c = +c;
-  let d = (c > 25)? (c + 24): (c + 65);
+  const d = (c > 25)? (c + 24): (c + 65);
   return String.fromCharCode(d);
 }
 

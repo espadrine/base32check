@@ -6,6 +6,7 @@ const { primitiveElements } = require('../binlib.js');
 
 function main() {
   search('base32check1');
+  search('base32check2');
 }
 
 function search(label) {
@@ -67,6 +68,7 @@ const primitives = {
       [0, 0, 1, 0, 0],
       [0, 0, 0, 1, 1] ],
   ],
+  base32check2: [...primitiveElements(1021)],
 };
 
 main();
