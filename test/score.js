@@ -195,7 +195,23 @@ function makeBatteries() {
         return findCollisions(checker, payload, attemptsPerPayload,
           checkPhoneticError, {});
       },
-    }
+    },
+    {
+      name: 'deletion',
+      probability: 0,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkDeletion, {});
+      },
+    },
+    {
+      name: 'insertion',
+      probability: 0,
+      run: function(checker, payload, attemptsPerPayload) {
+        return findCollisions(checker, payload, attemptsPerPayload,
+          checkInsertion, {});
+      },
+    },
   ];
 }
 
@@ -233,8 +249,8 @@ function checkSubstitution(checker, payload, { number = 1 }) {
 
   if (checker.compute(payload) === checker.compute(tweaked)) {
     // We have found a hash collision.
-    return new Collision(payload, tweaked, 'substitution',
-      [number, ...tweaks]);
+    return new Collision(payload, tweaked, number + 'sub',
+      [...tweaks]);
   }
 }
 
@@ -266,8 +282,8 @@ function checkJumpSubstitution(checker, payload,
 
   if (checker.compute(payload) === checker.compute(tweaked)) {
     // We have found a hash collision.
-    return new Collision(payload, tweaked, 'substitution',
-      [number, ...tweaks]);
+    return new Collision(payload, tweaked, `${distance}-${number}sub`,
+      [...tweaks]);
   }
 }
 
@@ -294,8 +310,7 @@ function checkTransposition(checker, payload, { distance = 0 }) {
   const tweaked = payload.slice(0, i1) + c2 + payload.slice(i1 + 1, i2) + c1 + payload.slice(i2 + 1);
   if (checker.compute(payload) === checker.compute(tweaked)) {
     // We have found a hash collision.
-    return new Collision(payload, tweaked, 'transposition',
-      [distance, c1, c2]);
+    return new Collision(payload, tweaked, `${distance}-trans`, [c1, c2]);
   }
 }
 
@@ -317,8 +332,7 @@ function checkTwinError(checker, payload, { distance = 0 }) {
   const tweaked = payload.slice(0, i1) + c2 + payload.slice(i1 + 1, i2) + c2 + payload.slice(i2 + 1);
   if (checker.compute(payload) === checker.compute(tweaked)) {
     // We have found a hash collision.
-    return new Collision(payload, tweaked, 'twin',
-      [distance, c1, c2]);
+    return new Collision(payload, tweaked, `${distance}-twin`, [c1, c2]);
   }
 }
 
@@ -339,6 +353,31 @@ function checkPhoneticError(checker, payload) {
   if (checker.compute(payload) === checker.compute(tweaked)) {
     // We have found a hash collision.
     return new Collision(payload, tweaked, 'phonetic', [digit]);
+  }
+}
+
+// checker: has a compute() and a verify().
+// Returns undefined (if no collision) or a Collision.
+function checkDeletion(checker, payload) {
+  // Take a random character.
+  const index = Math.floor(Math.random() * (payload.length - 1));
+  const tweaked = payload.slice(0, index) + payload.slice(index + 1);
+  if (checker.compute(payload) === checker.compute(tweaked)) {
+    // We have found a hash collision.
+    return new Collision(payload, tweaked, 'del', [index, payload[index]]);
+  }
+}
+
+// checker: has a compute() and a verify().
+// Returns undefined (if no collision) or a Collision.
+function checkInsertion(checker, payload) {
+  // Take a random character.
+  const index = Math.floor(Math.random() * (payload.length - 1));
+  const c = genBase32();
+  const tweaked = payload.slice(0, index) + c + payload.slice(index);
+  if (checker.compute(payload) === checker.compute(tweaked)) {
+    // We have found a hash collision.
+    return new Collision(payload, tweaked, 'ins', [index, c]);
   }
 }
 
