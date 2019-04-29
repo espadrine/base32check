@@ -104,7 +104,7 @@ function compute(payload) {
   let i = 0;
   for (; i < n; i++) {
     const a = fromBase32Char(payload[i]);
-    sum = matAdd(sum, matMul([a], primitivePowers[i+1]));
+    sum = matAdd(sum, matMul([a], primitivePowers[(i+1) % (cardinal-1)]));
     //console.log(`a ${a}\texp ${i+1}\tsum ${sum}`);
   }
 
