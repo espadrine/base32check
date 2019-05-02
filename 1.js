@@ -46,18 +46,13 @@ function matCp(a) {
 
 const primitivePowers = (function genPowersOfPrimitive() {
   // Index 0 contains P^0 = I, 1 has P^1, … 30 has P^30.
-  const powers = [
-    [ 0b10000,
-      0b01000,
-      0b00100,
-      0b00010,
-      0b00001 ],
-  ];
-  let p = powers[0];
-  for (let i = 0; i < 30; i++) {
+  const powers = [ [], matCp(primitive) ];
+  let p = powers[1];
+  for (let i = 0; i < cardinal - 3; i++) {
     p = matMul(p, primitive);
     powers.push(p);
   }
+  powers[0] = matMul(p, primitive);
   return powers;
 })();
 
@@ -94,7 +89,8 @@ function compute(payload) {
   // Therefore:      a * a^(cardinal-2) = 1
   // Here we have:   a = primitive^(n+1)
   // Hence:          code = opposite * primitive^((cardinal-2)*(n+1))
-  const exp = ((cardinal-2)*(n+1)) % (cardinal - 1);
+  let exp = (cardinal-n-2) % (cardinal - 1);
+  exp = (exp < 0)? exp + cardinal: exp;
   const inverse = primitivePowers[exp];
   const code = matMul([opposite], inverse)[0];
   //console.log(`opposite ${opposite}\texp ${exp}\tinverse ${JSON.stringify(inverse)}\tcode ${code}`);

@@ -8,9 +8,9 @@ const cardinal = 1021;
 // Primitive taken from bin/finite-field-primitive-elements 1021.
 const primitive = 1011;
 const primitivePowers = (function genPowersOfPrimitive() {
-  const powers = [1];
-  let p = 1;
-  for (let i = 0; i < cardinal - 2; i++) {
+  const powers = [1, primitive];
+  let p = primitive;
+  for (let i = 0; i < cardinal - 3; i++) {
     p = (p * primitive) % cardinal;
     powers.push(p);
   }
@@ -39,7 +39,7 @@ function compute(payload) {
     const a = fromBase32Char(payload[2*i]) * 32 + fromBase32Char(payload[2*i+1]);
     // We could use primitivePowers here, although this may be faster.
     p = (p * primitive) % cardinal;
-    sum = (sum + a * (p % cardinal)) % cardinal;
+    sum = (sum + a * p) % cardinal;
     //console.log(`a ${a}\tp ${p}\tsum ${sum}`);
   }
 
@@ -53,8 +53,10 @@ function compute(payload) {
   // Therefore:      a * a^(cardinal-2) = 1
   // Here we have:   a = primitive^(n+1)
   // Hence:          code = opposite * primitive^((cardinal-2)*(n+1))
-  const inverse = primitivePowers[((cardinal-2)*(n+1)) % (cardinal - 1)];
-  let code = (opposite * inverse) % cardinal;
+  let exp = (cardinal-n-2) % (cardinal - 1);
+  exp = (exp < 0)? exp + cardinal: exp;
+  const inverse = primitivePowers[exp];
+  const code = (opposite * inverse) % cardinal;
   //console.log(`opposite ${opposite}\tinverse ${inverse}\tp ${p}\tcode ${code}`);
   return toBase32Char(Math.floor(code / 32)) + toBase32Char(code % 32);
 }
