@@ -8,10 +8,9 @@ function main() {
     stats.forEach(displayBatteryStats);
     const errorRate = humanErrorDetectionRate(stats)
     const score = errorRate * 100;
-    const detectionRatePerBit = errorRate
-      / (checksum.size * checksum.bitsPerChar);
+    const detectionFactor = -Math.log2(1-errorRate) / (checksum.size * checksum.bitsPerChar);
     console.log(`Score: ${score.toFixed(3)}%\t`
-      + `Detection rate per bit: ${detectionRatePerBit}`);
+      + `Detection factor: ${detectionFactor.toFixed(3)}`);
   });
 }
 
