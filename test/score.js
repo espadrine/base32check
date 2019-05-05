@@ -1,4 +1,4 @@
-const { base32check1, base32check2 } = require('../lib.js');
+const { base32check1, base32check2, mod1007_32 } = require('../lib.js');
 const { mod11_10: numeric_mod11_10,  // Numeric 1-digit
         mod97_10: numeric_mod97_10,  // Numeric 2-digit
         mod37_36,                    // Alnum 1-digit
@@ -31,6 +31,10 @@ function makeChecksums() {
       checker: mod1271_36,
       size: 2,
       bitsPerChar: Math.log2(36) },
+    { label: 'MOD 1007-32',
+      checker: mod1007_32,
+      size: 2,
+      bitsPerChar: 5 },
   ];
 }
 
