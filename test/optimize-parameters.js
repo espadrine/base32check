@@ -5,8 +5,9 @@ const { checksums, computeCheckerDetectionRate } = require('./score.js');
 const { primitiveElements } = require('../binlib.js');
 
 function main() {
-  search('base32check1');
-  search('base32check2');
+  //search('base32check1');
+  //search('base32check2');
+  search('MOD 1007-32');
 }
 
 function search(label) {
@@ -21,8 +22,7 @@ function search(label) {
       acc.detection = detection;
       acc.primitive = primitive;
     }
-    console.log(`primitive ${JSON.stringify(primitive)}`);
-    console.log(`detection ${detection}`);
+    console.log(`primitive ${JSON.stringify(primitive)}\tdetection ${detection}`);
     return acc;
   }, { detection: 0, primitive: prims[0] });
   console.log(`Best primitive: ${JSON.stringify(best.primitive)}\t`
@@ -69,6 +69,7 @@ const primitives = {
       [0, 0, 0, 1, 1] ],
   ],
   base32check2: [...primitiveElements(1021)],
+  'MOD 1007-32': [...(function*() { for (let i = 32*32+1; i > 32; i -= 2) { yield i; } })()],
 };
 
 main();
