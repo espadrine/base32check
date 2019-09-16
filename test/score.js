@@ -4,7 +4,7 @@ const { mod11_10,   // Numeric 1-digit
         mod37_36,   // Alnum 1-digit
         mod1271_36, // Alnum 2-digit
 } = require('cdigit');
-const alphabet = require('./alphabet.js');
+const alphabet = require('../alphabet.js');
 
 // Checksum: {label, checker {compute(), verify()}, alphabet, size, bitsPerChar}
 function makeChecksums() {
