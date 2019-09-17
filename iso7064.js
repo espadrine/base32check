@@ -1,5 +1,3 @@
-const alphabets = require('./alphabet.js');
-
 class ISO7064Hybrid {
   constructor(alphabet) {
     this.alphabet = alphabet;  // Taken from ./alphabet.js
@@ -27,6 +25,4 @@ class ISO7064Hybrid {
   }
 }
 
-// Test: should be B.
-//var mod17_16 = new ISO7064Hybrid(alphabets.base16);
-//mod17_16.compute('D98989898909898')
+exports.ISO7064Hybrid = ISO7064Hybrid;
