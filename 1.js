@@ -90,7 +90,9 @@ function compute(payload) {
   // Here we have:   a = primitive^(n+1)
   // Hence:          code = opposite * primitive^((cardinal-2)*(n+1))
   let exp = (cardinal-n-2) % (cardinal - 1);
-  exp = (exp < 0)? exp + cardinal: exp;
+  if (exp < 0) {
+    exp += cardinal - 1
+  }
   const inverse = primitivePowers[exp];
   const code = matMul([opposite], inverse)[0];
   //console.log(`opposite ${opposite}\texp ${exp}\tinverse ${JSON.stringify(inverse)}\tcode ${code}`);
