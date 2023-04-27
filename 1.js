@@ -85,12 +85,18 @@ function compute(payload) {
   const opposite = sum;
 
   // We must solve:  code * primitive^(n+1) = opposite
-  // We know:        a^(cardinal-1) = 1
-  // Therefore:      a * a^(cardinal-2) = 1
-  // Here we have:   a = primitive^(n+1)
-  // Hence:          code = opposite * primitive^((cardinal-2)*(n+1))
-  let exp = (cardinal-n-2) % (cardinal - 1);
-  exp = (exp < 0)? exp + cardinal: exp;
+  // We know:        primitive^(m * (cardinal-1)) = 1 for all integer m >= 0
+  // Therefore:      code = opposite * primitive^exp
+  // Where:          exp = m * (cardinal-1) - (n+1), m chosen so 0 <= exp < cardinal-1
+  // Therefore:      exp = exp mod (cardinal-1)
+  //                     = (-(n+1)) mod (cardinal-1)
+  //                     = cardinal-1 - ((n+1 - 1) % (cardinal-1) + 1)
+  //                     = cardinal-2 - (n % (cardinal-1))
+  // Note:           exp is guaranteed to be an in-bounds index of primitivePowers (i.e.
+  //                 [0, cardinal-1)) because n >= 0, so n % (cardinal-1) is in [0, cardinal-1),
+  //                 or [0, cardinal-2], and is subtracted from cardinal-2
+  // Note:           In JavaScript, % is remainder, not mod, hence the extra math required
+  const exp = cardinal - 2 - (n % (cardinal - 1));
   const inverse = primitivePowers[exp];
   const code = matMul([opposite], inverse)[0];
   //console.log(`opposite ${opposite}\texp ${exp}\tinverse ${JSON.stringify(inverse)}\tcode ${code}`);
